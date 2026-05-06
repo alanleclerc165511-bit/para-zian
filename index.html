@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZIAN MOBILE 🏁</title>
+
+<style>
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
+
+#ui {
+  position:absolute;
+  top:0;
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  color:#00ffc8;
+  font-size:14px;
+}
+
+#controls {
+  position:absolute;
+  bottom:20px;
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+}
+
+.btn {
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:rgba(0,255,200,0.3);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-size:20px;
+}
+
+#menu, #final {
+  position:absolute;
+  width:100%;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  background:black;
+  color:white;
+  text-align:center;
+}
+
+button {
+  padding:12px 25px;
+  background:#00ffc8;
+  border:none;
+  font-size:16px;
+}
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>ZIAN MOBILE 🏁</h1>
+  <button onclick="game.start()">JUGAR</button>
+</div>
+
+<div id="ui">
+  <div id="stage"></div>
+  <div id="speed"></div>
+</div>
+
+<div id="controls">
+  <div class="btn" id="left">⬅</div>
+  <div class="btn" id="boost">⚡</div>
+  <div class="btn" id="right">➡</div>
+</div>
+
+<div id="final" style="display:none;">
+  <h2>🏁 FIN 🏁</h2>
+  <p>
+  No sé cómo explicarlo…<br><br>
+  Eres mi hermano en todos los idiomas.<br><br>
+  Gracias por todo este camino juntos 🏎️<br><br>
+  — Feliz cumpleaños Zian
+  </p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+class Game {
+  constructor(){
+    this.scene = new THREE.Scene();
+
+    this.camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 500);
+
+    this.renderer = new THREE.WebGLRenderer({ antialias:false });
+    this.renderer.setSize(innerWidth * 0.8, innerHeight * 0.8); // 🔥 menos resolución
+    document.body.appendChild(this.renderer.domElement);
+
+    this.speed = 0;
+    this.maxSpeed = 1;
+    this.boost = false;
+
+    this.level = 0;
+    this.distance = 0;
+    this.levels = ["Primaria","Secundaria","Prepa"];
+
+    this.init();
+  }
+
+  init(){
+    const light = new THREE.AmbientLight(0xffffff,0.8);
+    this.scene.add(light);
+
+    this.createRoad();
+    this.createCar();
+
+    this.animate();
+    this.setupControls();
+  }
+
+  createRoad(){
+    this.road = new THREE.Group();
+
+    for(let i=0;i<30;i++){ // 🔥 menos segmentos
+      const seg = new THREE.Mesh(
+        new THREE.PlaneGeometry(8,8),
+        new THREE.MeshBasicMaterial({color:0x111111})
+      );
+      seg.rotation.x = -Math.PI/2;
+      seg.position.z = -i*8;
+      this.road.add(seg);
+    }
+
+    this.scene.add(this.road);
+  }
+
+  createCar(){
+    this.car = new THREE.Mesh(
+      new THREE.BoxGeometry(1,0.4,2),
+      new THREE.MeshBasicMaterial({color:0x00ffc8})
+    );
+    this.car.position.y = 0.5;
+    this.scene.add(this.car);
+
+    this.camera.position.set(0,3,6);
+  }
+
+  setupControls(){
+    document.getElementById("left").ontouchstart = ()=> this.car.position.x -= 1;
+    document.getElementById("right").ontouchstart = ()=> this.car.position.x += 1;
+
+    document.getElementById("boost").ontouchstart = ()=> this.boost = true;
+    document.getElementById("boost").ontouchend = ()=> this.boost = false;
+  }
+
+  update(){
+    let max = this.boost ? 2 : this.maxSpeed;
+
+    this.speed += 0.01;
+    if(this.speed > max) this.speed = max;
+
+    this.road.children.forEach(obj=>{
+      obj.position.z += this.speed * 5;
+      if(obj.position.z > 5) obj.position.z -= 240;
+    });
+
+    this.distance += this.speed;
+    if(this.distance > 30){
+      this.distance = 0;
+      this.level++;
+
+      if(this.level >= this.levels.length){
+        document.getElementById("final").style.display="flex";
+        return;
+      }
+    }
+
+    document.getElementById("stage").innerText = this.levels[this.level] || "Final";
+    document.getElementById("speed").innerText = "Vel: " + Math.floor(this.speed*100);
+  }
+
+  animate(){
+    requestAnimationFrame(()=>this.animate());
+    this.update();
+    this.renderer.render(this.scene,this.camera);
+  }
+
+  start(){
+    document.getElementById("menu").style.display="none";
+  }
+}
+
+const game = new Game();
+</script>
+
+</body>
+</html>
